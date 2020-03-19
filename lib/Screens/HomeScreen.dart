@@ -4,6 +4,7 @@ import 'package:beaconapp/common_widgets/Button.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_duration_picker/flutter_duration_picker.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -14,7 +15,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool createHikeRoom = false;
   int _valInMinutes = 0;
-  String _hikerName;
+  String _hikerName, _enteredPassKey;
 
   void setUpLinks() async {
     final PendingDynamicLinkData data =
@@ -67,6 +68,31 @@ class _HomeScreenState extends State<HomeScreen> {
     // TODO: implement initState
     super.initState();
     setUpLinks();
+  }
+
+  checkPasskey(String enteredPasskey) async {
+    setState(() {
+      // isCreatingHikeRoom=true;
+    });
+    try {
+      final _store = Provider.of<FirestoreService>(context, listen: false);
+      bool hikeExist = await _store.checkIfHikeExists(enteredPasskey);
+      if (hikeExist) {
+
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HikeMainScreen(
+                enteredPasskey,
+                isReferal: true,
+              ),
+            ));
+      } else {
+        Fluttertoast.showToast(msg: 'Incorrect Passkey');
+      }
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
@@ -200,8 +226,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                               final passkey = await _store
                                                   .addHike(
                                                       hikerName: _hikerName,
-                                                      expiringAt:
-                                                          exp_time.toLocal().toString())
+                                                      expiringAt: exp_time
+                                                          .toLocal()
+                                                          .toString())
                                                   .whenComplete(() {
                                                 print("Done adding");
                                               });
@@ -232,7 +259,67 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 20.0,
                 ),
                 Button(
-                  onTap: () {},
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: (context) => Dialog(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(20.0))),
+                              child: Container(
+                                height: 250,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 32, vertical: 16),
+                                  child: Column(
+                                    children: <Widget>[
+                                      Container(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child: TextFormField(
+                                            cursorColor: Colors.purple[900],
+                                            onChanged: (key) {
+                                              _enteredPassKey = key;
+                                            },
+                                            decoration: InputDecoration(
+                                              enabledBorder:
+                                                  UnderlineInputBorder(
+                                                borderSide: BorderSide(
+                                                    color: Colors.black),
+                                              ),
+                                              focusedBorder:
+                                                  UnderlineInputBorder(
+                                                borderSide: BorderSide(
+                                                    color: Colors.deepPurple),
+                                              ),
+                                              labelText: 'Passkey',
+                                              labelStyle: TextStyle(
+                                                  color: Colors.purple[900]),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: 30,
+                                      ),
+                                      Flexible(
+                                        child: Button(
+                                            buttonWidth: 48,
+                                            buttonHeight: 30,
+                                            text: 'Validate',
+                                            textColor: Colors.white,
+                                            buttonColor: Colors.purple[900],
+                                            onTap: () {
+                                              Navigator.pop(context);
+                                              checkPasskey(_enteredPassKey);
+                                            }),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ));
+                  },
                   text: 'Join a Hike',
                   borderColor: Colors.black,
                   buttonColor: Colors.purple[900],

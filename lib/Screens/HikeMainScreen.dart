@@ -4,8 +4,11 @@ import 'package:beaconapp/Services/FirestoreService.dart';
 import 'package:beaconapp/Services/LocationService.dart';
 import 'package:beaconapp/common_widgets/Button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
+import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -20,11 +23,11 @@ class HikeMainScreen extends StatefulWidget {
 }
 
 class _HikeMainScreenState extends State<HikeMainScreen> {
-  String expiringAt, final_exp;
-  bool _isReferred = false, beacon_exp = false;
-  String _hikerName;
+  String expiringAt, final_exp,_hikerName,_linkMsg;
+  bool isGenLink=false,beacon_exp = false;
   int noOfHikers;
-  List<String> _hikers, hikers = [];
+  List<String> hikers = [];
+  final Set<Marker> _markers = Set();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   Completer<GoogleMapController> _controller = Completer();
   CameraPosition _initialPos =
@@ -48,32 +51,43 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
         context: context,
         builder: (context) {
           if (userExists) {
-            return Container(
-              decoration: BoxDecoration(),
-              child: FutureBuilder(
-                future: _store.getHikers(widget.passkey),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return ListView.separated(
-                        separatorBuilder: (context, index) => Divider(
-                              color: Colors.purple[900],
-                              thickness: 1.0,
-                            ),
-                        padding: EdgeInsets.all(8.0),
-                        itemCount: snapshot.data.length,
-                        itemBuilder: (context, index) {
-                          return ListTile(
-                            onTap: () {},
-                            title: Text(snapshot.data[index]),
-                          );
-                        });
-                  } else {
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                },
-              ),
+            return Column(
+
+              children: <Widget>[
+                Center(
+                  child : Container(
+                    margin: EdgeInsets.only(top: 10.0,bottom: 10.0),
+                      child: Text('Your fellow hikers' , style: TextStyle(fontSize: 25.0),))
+                ),
+                Container(
+                  height: 200.0,
+
+                  child: FutureBuilder(
+                    future: _store.getHikers(widget.passkey),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        return ListView.separated(
+                            separatorBuilder: (context, index) => Divider(
+                                  color: Colors.purple[900],
+                                  thickness: 1.0,
+                                ),
+                            padding: EdgeInsets.all(8.0),
+                            itemCount: snapshot.data.length,
+                            itemBuilder: (context, index) {
+                              return ListTile(
+                                onTap: () {},
+                                title: Text(snapshot.data[index]),
+                              );
+                            });
+                      } else {
+                        return Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ],
             );
           } else {
             return Center(child: Text("The hike already ended !"));
@@ -94,16 +108,7 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
     });
   }
 
-//  getHikersList(BuildContext context) async {
-//    //countDownTime();
-//     final _store = Provider.of<FirestoreService>(context, listen: false);
-//    _isReferred = widget.isReferal;
-//    _hikerName = widget.hikeCreator;
-//    _store.
-//
-//
-//    String curr_dur = expiringAt;
-//  }
+
 
   getHikersList(BuildContext context) async {
     final _store = Provider.of<FirestoreService>(context, listen: false);
@@ -115,14 +120,35 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
       });
     });
 
-    //print(hikers);
   }
-  // Future<bool> _onWillPop() async {
-  //   return (await showDialog(
-  //     context: context,
-  //     builder: (context) => showExitDialog(context),
-  //   )) ?? false;
-  // }
+
+  Future<void> _goToHikeLocation(double lat, double long) async {
+
+    GoogleMapController controller = await _controller.future;
+    controller.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, long), 12.0));
+    setState(() {
+      _markers.add(
+        Marker(
+            markerId: MarkerId('Hikes Location'),
+            position: LatLng(lat,long),
+            infoWindow: InfoWindow(title: 'Yo Hikers', snippet: 'This is our hike location . Tap to copy'),
+          onTap: (){
+
+          }
+
+        ),
+
+      );
+
+    });
+
+    Fluttertoast.showToast(
+        msg: "Sharing Location Latitude $lat , Longitude $long",
+        toastLength: Toast.LENGTH_SHORT,
+      timeInSecForIos: 4
+
+    );
+  }
 
   getLocation(BuildContext context) async {
     final _loc = Provider.of<Location>(context, listen: false);
@@ -135,18 +161,9 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
       _initialPos =
           CameraPosition(target: LatLng(_loc.lat, _loc.lat), zoom: 12.0);
     });
+    _goToHikeLocation(_loc.lat,_loc.long);
   }
 
-  // _showBottomSheet(BuildContext context) {
-  //   showBottomSheet(
-  //       context: context,
-  //       builder: (builder) {
-  //         return Container(
-  //           height: 200.0,
-  //           color: Colors.black,
-  //         );
-  //       });
-  // }
 
   @override
   void initState() {
@@ -155,6 +172,9 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
     getHikersList(context);
     getLocation(context);
     countDownTime();
+    if (widget.isReferal){
+      _askNameAndAdd();
+    }
   }
 
   @override
@@ -187,10 +207,15 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
                         )),
                     Container(
                       margin: EdgeInsets.only(left: 30.0, bottom: 10.0),
-                      child: Icon(
-                        Icons.location_on,
-                        color: Colors.white,
-                        size: 40.0,
+                      child: GestureDetector(
+                        onTap: (){
+                         createUrl();
+                        },
+                        child: Icon(
+                          Icons.share,
+                          color: Colors.white,
+                          size: 35.0,
+                        ),
                       ),
                     )
                   ],
@@ -204,6 +229,9 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
               onMapCreated: (GoogleMapController controller) {
                 _controller.complete(controller);
               },
+              myLocationEnabled: true,
+              myLocationButtonEnabled: true,
+              markers: _markers,
             ),
           ),
         ],
@@ -217,5 +245,117 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
         onPressed: _showBottomSheetCallback,
       ),
     );
+  }
+
+  void _askNameAndAdd() {
+    showDialog(context: context,builder:(context) => Dialog(
+      shape: RoundedRectangleBorder(
+          borderRadius:
+          BorderRadius.all(Radius.circular(20.0))),
+      child: Container(
+        height: 250,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: 32, vertical: 16),
+          child: Column(
+            children: <Widget>[
+              Container(
+                child: Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: TextFormField(
+                    cursorColor: Colors.purple[900],
+                    onChanged: (key) {
+                      _hikerName = key;
+                    },
+                    decoration: InputDecoration(
+                      enabledBorder:
+                      UnderlineInputBorder(
+                        borderSide: BorderSide(
+                            color: Colors.black),
+                      ),
+                      focusedBorder:
+                      UnderlineInputBorder(
+                        borderSide: BorderSide(
+                            color: Colors.deepPurple),
+                      ),
+                      labelText: 'Your Name',
+                      labelStyle: TextStyle(
+                          color: Colors.purple[900]),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 30,
+              ),
+              Flexible(
+                child: Button(
+                    buttonWidth: 48,
+                    buttonHeight: 30,
+                    text: 'Join in',
+                    textColor: Colors.white,
+                    buttonColor: Colors.purple[900],
+                    onTap: () async {
+                      final _store = Provider.of<FirestoreService>(context,listen: false);
+                      bool res = await _store.addUserToHike(_hikerName,widget.passkey);
+                      if(res){
+                        Fluttertoast.showToast(msg: "Added you to the nike");
+                      }
+                      else {
+                        Fluttertoast.showToast(msg: "Already a user exists with that name");
+                      }
+                        Navigator.pop(context);
+                    }),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ) );
+  }
+
+  void createUrl() async{
+    if(!isGenLink){
+      await _generateDynamicLink(true);
+      Clipboard.setData(ClipboardData(text: _linkMsg));
+      Fluttertoast.showToast(msg: 'Url is copied');
+
+    }
+  }
+
+  Future<void> _generateDynamicLink(bool short) async {
+    setState(() {
+      isGenLink = true;
+    });
+    final DynamicLinkParameters parameters = DynamicLinkParameters(
+      uriPrefix: 'https://getuserbeacon.page.link',
+      link: Uri.parse(
+          'https://dynamic.link.example/hikeScreen?${widget.passkey}'),
+      androidParameters: AndroidParameters(
+        packageName: 'com.parthpanchal.beaconapp',
+        minimumVersion: 0,
+      ),
+      dynamicLinkParametersOptions: DynamicLinkParametersOptions(
+        shortDynamicLinkPathLength: ShortDynamicLinkPathLength.short,
+      ),
+      iosParameters: IosParameters(
+        bundleId: 'com.google.FirebaseCppDynamicLinksTestApp.dev',
+        minimumVersion: '0',
+      ),
+    );
+
+    Uri url;
+    if (short) {
+      final ShortDynamicLink shortLink = await parameters.buildShortLink();
+      url = shortLink.shortUrl;
+      print("The url is " + url.toString());
+    } else {
+      url = await parameters.buildUrl();
+      print("The created url is " + url.toString());
+    }
+    setState(() {
+      _linkMsg = url.toString();
+      isGenLink = false;
+    });
   }
 }

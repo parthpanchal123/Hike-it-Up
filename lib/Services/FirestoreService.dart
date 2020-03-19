@@ -22,6 +22,23 @@ class FirestoreService {
     }
   }
 
+  Future<bool> addUserToHike(String hikerName,String passkey)async{
+    DocumentReference _ref = _store.collection('hikes').document(passkey);
+    DocumentSnapshot snapshot = await _ref.get();
+    List names = snapshot.data['hikers'] ;
+    if(names.contains(hikerName) == true){
+      return false ;
+    }
+    else {
+      _ref.updateData({'hikers' : FieldValue.arrayUnion([hikerName])}).whenComplete((){
+        print("New hiker added");
+        return true ;
+      });
+    }
+
+
+  }
+
   Future<List<dynamic>> getHikers(String passkey) async {
     try {
       DocumentReference ref = _store.collection('hikes').document(passkey);
