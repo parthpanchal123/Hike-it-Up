@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "93630182461",
+    "firebase_url": "https://beacon-app-4f46f.firebaseio.com",
+    "project_id": "beacon-app-4f46f",
+    "storage_bucket": "beacon-app-4f46f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:93630182461:android:805904c3b698b5f391a654",
+        "android_client_info": {
+          "package_name": "com.parthpanchal.beaconapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "93630182461-p44658lr7v3daa136p3jbjshg53t1s7a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6arCinOq_rHB6yNlViCMuwoZYH5Ate4g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "93630182461-p44658lr7v3daa136p3jbjshg53t1s7a.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
