@@ -12,10 +12,9 @@ class FirestoreService {
         'hikeCreatorName': hikerName ?? "Parth",
         'noOfHikers': 1,
         'expiryAt': expiringAt,
-        'hikers' : FieldValue.arrayUnion([hikerName]),
+        'hikers': FieldValue.arrayUnion([hikerName]),
         'lat': 0.0,
-        'long' : 0.0
-
+        'long': 0.0
       });
       return ref.documentID.toString();
     } catch (e) {
@@ -23,34 +22,39 @@ class FirestoreService {
     }
   }
 
-  Future<List<dynamic>> getHikers(String passkey) async{
+  Future<List<dynamic>> getHikers(String passkey) async {
     try {
       DocumentReference ref = _store.collection('hikes').document(passkey);
       final hike_data = await ref.get();
       return hike_data.data['hikers'];
-    } catch(e){
+    } catch (e) {
       print(e);
     }
   }
 
-  Future <String> getExpTime(String passkey)async {
+  Future<String> getExpTime(String passkey) async {
     try {
       DocumentReference ref = _store.collection('hikes').document(passkey);
       final hike_data = await ref.get();
       return hike_data.data['expiryAt'];
+    } catch (e) {
+      return e.toString();
     }
-    catch(e){
-      return e.toString() ;
-
-    }
-
-
   }
-  Future<void> updateLocation (String passkey,dynamic lat,dynamic long) async{
+
+  Future<void> updateLocation(String passkey, dynamic lat, dynamic long) async {
     _store.collection('hikes').document(passkey).updateData({
       'lat': lat,
       'long': long,
     });
+  }
 
+  Future<bool> checkIfHikeExists(String passkey) async {
+    final snapShot = await _store.collection('hikes').document(passkey).get();
+    if (snapShot == null || !snapShot.exists) {
+      return false;
+    } else {
+      return true;
+    }
   }
 }
