@@ -11,11 +11,46 @@ class FirestoreService {
       ref = await _store.collection('hikes').add({
         'hikeCreatorName': hikerName ?? "Parth",
         'noOfHikers': 1,
-        'expiryAt': expiringAt
+        'expiryAt': expiringAt,
+        'hikers' : FieldValue.arrayUnion([hikerName]),
+        'lat': 0.0,
+        'long' : 0.0
+
       });
       return ref.documentID.toString();
     } catch (e) {
       return e.toString();
     }
+  }
+
+  Future<List<dynamic>> getHikers(String passkey) async{
+    try {
+      DocumentReference ref = _store.collection('hikes').document(passkey);
+      final hike_data = await ref.get();
+      return hike_data.data['hikers'];
+    } catch(e){
+      print(e);
+    }
+  }
+
+  Future <String> getExpTime(String passkey)async {
+    try {
+      DocumentReference ref = _store.collection('hikes').document(passkey);
+      final hike_data = await ref.get();
+      return hike_data.data['expiryAt'];
+    }
+    catch(e){
+      return e.toString() ;
+
+    }
+
+
+  }
+  Future<void> updateLocation (String passkey,dynamic lat,dynamic long) async{
+    _store.collection('hikes').document(passkey).updateData({
+      'lat': lat,
+      'long': long,
+    });
+
   }
 }

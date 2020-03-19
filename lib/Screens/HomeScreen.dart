@@ -201,7 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   .addHike(
                                                       hikerName: _hikerName,
                                                       expiringAt:
-                                                          exp_time.toString())
+                                                          exp_time.toLocal().toString())
                                                   .whenComplete(() {
                                                 print("Done adding");
                                               });
