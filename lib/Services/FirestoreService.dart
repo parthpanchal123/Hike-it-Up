@@ -14,7 +14,8 @@ class FirestoreService {
         'expiryAt': expiringAt,
         'hikers': FieldValue.arrayUnion([hikerName]),
         'lat': 0.0,
-        'long': 0.0
+        'long': 0.0,
+        'beaconWith': hikerName
       });
       return ref.documentID.toString();
     } catch (e) {
@@ -22,21 +23,35 @@ class FirestoreService {
     }
   }
 
-  Future<bool> addUserToHike(String hikerName,String passkey)async{
+  Future<String> getbeaconHolder(String passkey) async {
+    DocumentReference ref = _store.collection('hikes').document(passkey);
+    final hike_data = await ref.get();
+    return hike_data.data['beaconWith'];
+  }
+
+  Future<String> relayBeacon(String passkey, String new_head) async {
+    _store
+        .collection('hikes')
+        .document(passkey)
+        .updateData({'beaconWith': new_head}).whenComplete(() {
+      return new_head;
+    });
+  }
+
+  Future<bool> addUserToHike(String hikerName, String passkey) async {
     DocumentReference _ref = _store.collection('hikes').document(passkey);
     DocumentSnapshot snapshot = await _ref.get();
-    List names = snapshot.data['hikers'] ;
-    if(names.contains(hikerName) == true){
-      return false ;
-    }
-    else {
-      _ref.updateData({'hikers' : FieldValue.arrayUnion([hikerName])}).whenComplete((){
+    List names = snapshot.data['hikers'];
+    if (names.contains(hikerName) == true) {
+      return false;
+    } else {
+      _ref.updateData({
+        'hikers': FieldValue.arrayUnion([hikerName])
+      }).whenComplete(() {
         print("New hiker added");
-        return true ;
+        return true;
       });
     }
-
-
   }
 
   Future<List<dynamic>> getHikers(String passkey) async {
