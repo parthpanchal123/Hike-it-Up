@@ -5,6 +5,7 @@ import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_duration_picker/flutter_duration_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:progress_dialog/progress_dialog.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -15,7 +16,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool createHikeRoom = false;
   int _valInMinutes = 0;
-  String _hikerName, _enteredPassKey;
+  String _hikerName = "", _enteredPassKey;
 
   void setUpLinks() async {
     final PendingDynamicLinkData data =
@@ -97,6 +98,28 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final _store = Provider.of<FirestoreService>(context, listen: false);
+    ProgressDialog pr;
+    pr = new ProgressDialog(context, type: ProgressDialogType.Normal);
+
+    pr.style(
+      message: 'Creating a hike ...',
+      borderRadius: 10.0,
+      progressWidget: Container(
+          padding: EdgeInsets.all(8.0),
+          child: CircularProgressIndicator(
+            strokeWidth: 3.0,
+          )),
+      backgroundColor: Colors.white,
+      elevation: 90.0,
+      //insetAnimCurve: Curves.elasticInOut,
+      progress: 0.0,
+      maxProgress: 100.0,
+      progressTextStyle: TextStyle(
+          color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+      messageTextStyle: TextStyle(
+          color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
+    );
+
     return Scaffold(
         body: Stack(
       children: <Widget>[
@@ -222,10 +245,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                               text: 'Create Hike',
                                               buttonHeight: 17.0,
                                               onTap: () async {
-                                                if (_hikerName.isEmpty) {
+                                                if (_hikerName == "") {
                                                   Fluttertoast.showToast(
                                                       msg: 'Enter your name !');
                                                 } else {
+                                                  pr.show();
                                                   // print(DateTime.now().toLocal());
                                                   final exp_time = DateTime
                                                           .now()
@@ -242,7 +266,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                                               .toString())
                                                       .whenComplete(() {
                                                     print("Done adding");
+                                                    pr.dismiss();
                                                   });
+
+                                                  Fluttertoast.showToast(
+                                                      msg: 'Hike setup done !');
 
                                                   Navigator.pop(context);
                                                   Navigator.push(

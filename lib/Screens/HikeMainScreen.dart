@@ -26,7 +26,7 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
   String expiringAt, final_exp, _hikerName, _linkMsg;
   bool isGenLink = false, beacon_exp = false;
   int noOfHikers;
-  List<String> hikers = [];
+  List<dynamic> hikers = [];
   final Set<Marker> _markers = Set();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   Completer<GoogleMapController> _controller = Completer();
@@ -43,6 +43,12 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
     final _store = Provider.of<FirestoreService>(context, listen: false);
     bool hikeExists = await _store.checkIfHikeExists(widget.passkey);
     String beaconHolder = await _store.getbeaconHolder(widget.passkey);
+
+    Future<String> _beaconRelayCallback(String new_head) async {
+      beaconHolder = await _store.relayBeacon(widget.passkey, new_head);
+      Fluttertoast.showToast(msg: "Beaker handed over to $new_head");
+      return new_head;
+    }
 
     showModalBottomSheet(
         shape: RoundedRectangleBorder(
@@ -63,41 +69,79 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
                         ))),
                 Container(
                   height: 200.0,
-                  child: FutureBuilder(
-                    future: _store.getHikers(widget.passkey),
+                  child: StreamBuilder(
+                    stream: Firestore.instance
+                        .collection('hikes')
+                        .document(widget.passkey)
+                        .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
-                        print(_hikerName);
-                        return ListView.separated(
-                            separatorBuilder: (context, index) => Divider(
-                                  color: Colors.purple[900],
-                                  thickness: 1.0,
-                                ),
-                            padding: EdgeInsets.all(8.0),
-                            itemCount: snapshot.data.length,
-                            itemBuilder: (context, index) {
-                              return ListTile(
+                        hikers = snapshot.data['hikers'];
+
+                        if (hikers.length != 0) {
+                          return ListView.separated(
+                              separatorBuilder: (_, index) => Divider(
+                                    color: Colors.purple[900],
+                                  ),
+                              itemCount: hikers.length,
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                  title: Text(hikers[index]),
+                                  trailing: hikers[index] == beaconHolder
+                                      ? Icon(
+                                          Icons.adjust,
+                                          color: Colors.purple[900],
+                                        )
+                                      : Container(
+                                          width: 2.0,
+                                          height: 2.0,
+                                        ),
+                                  onTap: () async {
+                                    print("Hiker name : " +
+                                        _hikerName.toString());
+                                    print("Beacon holder : " + beaconHolder);
+                                    if (widget.isReferal == false) {
+                                      _hikerName = widget.hikeCreator;
+                                    }
+                                    if (beaconHolder == _hikerName) {
+                                      print("zzzzzzzzHiker name : " +
+                                          _hikerName.toString());
+                                      print("zzzzzzzzzzzBeacon holder : " +
+                                          beaconHolder);
+                                      final new_head =
+                                          await _beaconRelayCallback(
+                                              hikers[index]);
+                                      setState(() {
+                                        beaconHolder = new_head;
+                                      });
+                                      Fluttertoast.showToast(msg: 'Updated');
+                                      // Navigator.pop(context);
+                                    } else {
+                                      Fluttertoast.showToast(
+                                          msg:
+                                              "First you should own the beacon");
+                                    }
+                                  },
                                   onLongPress: () {
-                                    if (snapshot.data[index] == _hikerName) {
+                                    if (hikers[index] == widget.hikeCreator) {
+                                      Fluttertoast.showToast(
+                                          msg:
+                                              "That is you , the hike Creator");
+                                    }
+                                    if (hikers[index] == _hikerName) {
                                       print("Yes youuuu");
                                       Fluttertoast.showToast(
                                           msg: "That is you");
                                     }
                                   },
-                                  onTap: () {
-                                    if (beaconHolder == _hikerName) {
-                                      setState(() async {
-                                        beaconHolder = await _store.relayBeacon(
-                                            widget.passkey,
-                                            snapshot.data[index]);
-                                      });
-                                    }
-                                  },
-                                  title: Text(snapshot.data[index]),
-                                  trailing: snapshot.data[index] == beaconHolder
-                                      ? Icon(Icons.add_location)
-                                      : Icon(Icons.notifications_none));
-                            });
+                                );
+                              });
+                        } else {
+                          return Center(
+                            child: Text('The hike has ended'),
+                          );
+                        }
+                        ;
                       } else {
                         return Center(
                           child: CircularProgressIndicator(),

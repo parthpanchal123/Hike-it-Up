@@ -34,6 +34,7 @@ class FirestoreService {
         .collection('hikes')
         .document(passkey)
         .updateData({'beaconWith': new_head}).whenComplete(() {
+      print("Head updated");
       return new_head;
     });
   }
