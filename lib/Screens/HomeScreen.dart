@@ -163,6 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             margin: EdgeInsets.only(top: 10.0),
                                             height: 60.0,
                                             child: TextFormField(
+                                              cursorColor: Colors.purple[900],
                                               style: TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 20.0),
@@ -171,11 +172,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   contentPadding:
                                                       EdgeInsets.only(
                                                           top: 15.0,
+                                                          bottom: 15.0,
                                                           left: 15.0),
                                                   prefixIcon: Icon(
                                                     Icons.person,
                                                     color: Colors.black,
-                                                    size: 25.0,
+                                                    size: 28.0,
                                                   )),
                                               onChanged: (val) {
                                                 _hikerName = val;
@@ -220,34 +222,41 @@ class _HomeScreenState extends State<HomeScreen> {
                                               text: 'Create Hike',
                                               buttonHeight: 17.0,
                                               onTap: () async {
-                                                // print(DateTime.now().toLocal());
-                                                final exp_time = DateTime.now()
-                                                    .toLocal()
-                                                    .add(Duration(
-                                                        minutes:
-                                                            _valInMinutes));
-                                                print(exp_time);
-                                                final passkey = await _store
-                                                    .addHike(
-                                                        hikerName: _hikerName,
-                                                        expiringAt: exp_time
-                                                            .toLocal()
-                                                            .toString())
-                                                    .whenComplete(() {
-                                                  print("Done adding");
-                                                });
+                                                if (_hikerName.isEmpty) {
+                                                  Fluttertoast.showToast(
+                                                      msg: 'Enter your name !');
+                                                } else {
+                                                  // print(DateTime.now().toLocal());
+                                                  final exp_time = DateTime
+                                                          .now()
+                                                      .toLocal()
+                                                      .add(Duration(
+                                                          minutes:
+                                                              _valInMinutes));
+                                                  print(exp_time);
+                                                  final passkey = await _store
+                                                      .addHike(
+                                                          hikerName: _hikerName,
+                                                          expiringAt: exp_time
+                                                              .toLocal()
+                                                              .toString())
+                                                      .whenComplete(() {
+                                                    print("Done adding");
+                                                  });
 
-                                                Navigator.pop(context);
-                                                Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            HikeMainScreen(
-                                                              passkey,
-                                                              isReferal: false,
-                                                              hikeCreator:
-                                                                  _hikerName,
-                                                            )));
+                                                  Navigator.pop(context);
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              HikeMainScreen(
+                                                                passkey,
+                                                                isReferal:
+                                                                    false,
+                                                                hikeCreator:
+                                                                    _hikerName,
+                                                              )));
+                                                }
                                               },
                                             ),
                                           )
