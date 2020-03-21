@@ -78,7 +78,6 @@ class _HomeScreenState extends State<HomeScreen> {
       final _store = Provider.of<FirestoreService>(context, listen: false);
       bool hikeExist = await _store.checkIfHikeExists(enteredPasskey);
       if (hikeExist) {
-
         Navigator.push(
             context,
             MaterialPageRoute(
@@ -115,216 +114,222 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Positioned(
           //  height: 500.0,
-          top: 500,
+          bottom: 0,
           child: Container(
-            height: MediaQuery.of(context).size.height - 400,
+            height: 210.0,
             width: MediaQuery.of(context).size.width,
             decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(50.0),
                     topRight: Radius.circular(50.0))),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                SizedBox(
-                  height: 30.0,
-                ),
-                Button(
-                  text: 'Create a Hike',
-                  borderColor: Colors.black,
-                  buttonColor: Colors.purple[900],
-                  onTap: () {
-                    showDialog(
-                        context: context,
-                        builder: (context) => Dialog(
-                              elevation: 2.0,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20.0)),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: SingleChildScrollView(
-                                  child: Container(
-                                    width: 500,
-                                    height: 475,
-                                    decoration: BoxDecoration(),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        Text('Hiker Name',
-                                            style: TextStyle(
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 23.0,
-                                                letterSpacing: 0.5)),
-                                        Container(
-                                          margin: EdgeInsets.only(top: 10.0),
-                                          height: 60.0,
-                                          child: TextFormField(
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 20.0),
-                                            decoration: InputDecoration(
-                                                border: InputBorder.none,
-                                                contentPadding: EdgeInsets.only(
-                                                    top: 15.0, left: 15.0),
-                                                prefixIcon: Icon(
-                                                  Icons.person,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  SizedBox(
+                    height: 5.0,
+                  ),
+                  Button(
+                    text: 'Create a Hike',
+                    borderColor: Colors.black,
+                    buttonColor: Colors.purple[900],
+                    onTap: () {
+                      showDialog(
+                          context: context,
+                          builder: (context) => Dialog(
+                                elevation: 2.0,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20.0)),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: SingleChildScrollView(
+                                    child: Container(
+                                      width: 500,
+                                      height: 475,
+                                      decoration: BoxDecoration(),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          Text('Hiker Name',
+                                              style: TextStyle(
                                                   color: Colors.black,
-                                                  size: 25.0,
-                                                )),
-                                            onChanged: (val) {
-                                              _hikerName = val;
-                                            },
-                                          ),
-                                          decoration: BoxDecoration(
-                                              color: Colors.grey[400],
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(25.0))),
-                                        ),
-                                        SizedBox(
-                                          height: 20.0,
-                                        ),
-                                        Text('Time Duration',
-                                            style: TextStyle(
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 23.0,
-                                                letterSpacing: 0.5)),
-                                        SizedBox(
-                                          height: 20.0,
-                                        ),
-                                        Center(
-                                          child: Container(
-                                            height: 200.0,
-                                            child: DurationPicker(
-                                              onChange: (Duration value) {
-                                                setState(() {
-                                                  _valInMinutes =
-                                                      value.inMinutes;
-                                                });
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 23.0,
+                                                  letterSpacing: 0.5)),
+                                          Container(
+                                            margin: EdgeInsets.only(top: 10.0),
+                                            height: 60.0,
+                                            child: TextFormField(
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 20.0),
+                                              decoration: InputDecoration(
+                                                  border: InputBorder.none,
+                                                  contentPadding:
+                                                      EdgeInsets.only(
+                                                          top: 15.0,
+                                                          left: 15.0),
+                                                  prefixIcon: Icon(
+                                                    Icons.person,
+                                                    color: Colors.black,
+                                                    size: 25.0,
+                                                  )),
+                                              onChanged: (val) {
+                                                _hikerName = val;
                                               },
-                                              snapToMins: 1.0,
+                                            ),
+                                            decoration: BoxDecoration(
+                                                color: Colors.grey[400],
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(25.0))),
+                                          ),
+                                          SizedBox(
+                                            height: 20.0,
+                                          ),
+                                          Text('Time Duration',
+                                              style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 23.0,
+                                                  letterSpacing: 0.5)),
+                                          SizedBox(
+                                            height: 20.0,
+                                          ),
+                                          Center(
+                                            child: Container(
+                                              height: 200.0,
+                                              child: DurationPicker(
+                                                onChange: (Duration value) {
+                                                  setState(() {
+                                                    _valInMinutes =
+                                                        value.inMinutes;
+                                                  });
+                                                },
+                                                snapToMins: 1.0,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            height: 10.0,
+                                          ),
+                                          Center(
+                                            child: Button(
+                                              text: 'Create Hike',
+                                              buttonHeight: 17.0,
+                                              onTap: () async {
+                                                // print(DateTime.now().toLocal());
+                                                final exp_time = DateTime.now()
+                                                    .toLocal()
+                                                    .add(Duration(
+                                                        minutes:
+                                                            _valInMinutes));
+                                                print(exp_time);
+                                                final passkey = await _store
+                                                    .addHike(
+                                                        hikerName: _hikerName,
+                                                        expiringAt: exp_time
+                                                            .toLocal()
+                                                            .toString())
+                                                    .whenComplete(() {
+                                                  print("Done adding");
+                                                });
+
+                                                Navigator.pop(context);
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            HikeMainScreen(
+                                                              passkey,
+                                                              isReferal: false,
+                                                              hikeCreator:
+                                                                  _hikerName,
+                                                            )));
+                                              },
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ));
+                    },
+                  ),
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  Button(
+                    onTap: () {
+                      showDialog(
+                          context: context,
+                          builder: (context) => Dialog(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.all(
+                                        Radius.circular(20.0))),
+                                child: Container(
+                                  height: 250,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 32, vertical: 16),
+                                    child: Column(
+                                      children: <Widget>[
+                                        Container(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(4.0),
+                                            child: TextFormField(
+                                              cursorColor: Colors.purple[900],
+                                              onChanged: (key) {
+                                                _enteredPassKey = key;
+                                              },
+                                              decoration: InputDecoration(
+                                                enabledBorder:
+                                                    UnderlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Colors.black),
+                                                ),
+                                                focusedBorder:
+                                                    UnderlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Colors.deepPurple),
+                                                ),
+                                                labelText: 'Passkey',
+                                                labelStyle: TextStyle(
+                                                    color: Colors.purple[900]),
+                                              ),
                                             ),
                                           ),
                                         ),
                                         SizedBox(
-                                          height: 10.0,
+                                          height: 30,
                                         ),
-                                        Center(
+                                        Flexible(
                                           child: Button(
-                                            text: 'Create Hike',
-                                            buttonHeight: 17.0,
-                                            onTap: () async {
-                                              // print(DateTime.now().toLocal());
-                                              final exp_time = DateTime.now()
-                                                  .toLocal()
-                                                  .add(Duration(
-                                                      minutes: _valInMinutes));
-                                              print(exp_time);
-                                              final passkey = await _store
-                                                  .addHike(
-                                                      hikerName: _hikerName,
-                                                      expiringAt: exp_time
-                                                          .toLocal()
-                                                          .toString())
-                                                  .whenComplete(() {
-                                                print("Done adding");
-                                              });
-
-                                              Navigator.pop(context);
-                                              Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          HikeMainScreen(
-                                                            passkey,
-                                                            isReferal: false,
-                                                            hikeCreator:
-                                                                _hikerName,
-                                                          )));
-                                            },
-                                          ),
-                                        )
+                                              buttonWidth: 48,
+                                              buttonHeight: 30,
+                                              text: 'Validate',
+                                              textColor: Colors.white,
+                                              buttonColor: Colors.purple[900],
+                                              onTap: () {
+                                                Navigator.pop(context);
+                                                checkPasskey(_enteredPassKey);
+                                              }),
+                                        ),
                                       ],
                                     ),
                                   ),
                                 ),
-                              ),
-                            ));
-                  },
-                ),
-                SizedBox(
-                  height: 20.0,
-                ),
-                Button(
-                  onTap: () {
-                    showDialog(
-                        context: context,
-                        builder: (context) => Dialog(
-                              shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(20.0))),
-                              child: Container(
-                                height: 250,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 32, vertical: 16),
-                                  child: Column(
-                                    children: <Widget>[
-                                      Container(
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(4.0),
-                                          child: TextFormField(
-                                            cursorColor: Colors.purple[900],
-                                            onChanged: (key) {
-                                              _enteredPassKey = key;
-                                            },
-                                            decoration: InputDecoration(
-                                              enabledBorder:
-                                                  UnderlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color: Colors.black),
-                                              ),
-                                              focusedBorder:
-                                                  UnderlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color: Colors.deepPurple),
-                                              ),
-                                              labelText: 'Passkey',
-                                              labelStyle: TextStyle(
-                                                  color: Colors.purple[900]),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        height: 30,
-                                      ),
-                                      Flexible(
-                                        child: Button(
-                                            buttonWidth: 48,
-                                            buttonHeight: 30,
-                                            text: 'Validate',
-                                            textColor: Colors.white,
-                                            buttonColor: Colors.purple[900],
-                                            onTap: () {
-                                              Navigator.pop(context);
-                                              checkPasskey(_enteredPassKey);
-                                            }),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ));
-                  },
-                  text: 'Join a Hike',
-                  borderColor: Colors.black,
-                  buttonColor: Colors.purple[900],
-                )
-              ],
+                              ));
+                    },
+                    text: 'Join a Hike',
+                    borderColor: Colors.black,
+                    buttonColor: Colors.purple[900],
+                  )
+                ],
+              ),
             ),
           ),
         )
