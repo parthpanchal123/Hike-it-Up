@@ -1,7 +1,7 @@
 # Flutter Beacon-app
 
 A Flutter application that allows you to share your accurate location with either one or multiple people in real time.
-The duration of the location sharing time can be set .
+The duration of the location sharing time can be set . The hike can be shared to other users via a link or a passkey
 
 ## Screenshots 
 
