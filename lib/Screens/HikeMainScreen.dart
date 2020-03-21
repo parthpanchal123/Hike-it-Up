@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:beaconapp/Services/FirestoreService.dart';
 import 'package:beaconapp/Services/LocationService.dart';
@@ -8,11 +9,14 @@ import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_duration_picker/flutter_duration_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:progress_dialog/progress_dialog.dart';
 import 'package:provider/provider.dart';
 
 double _lat = 0, _long = 0;
+ProgressDialog pr;
 
 class HikeMainScreen extends StatefulWidget {
   bool isReferal;
@@ -25,17 +29,28 @@ class HikeMainScreen extends StatefulWidget {
 class _HikeMainScreenState extends State<HikeMainScreen> {
   String expiringAt, final_exp, _hikerName, _linkMsg;
   bool isGenLink = false, beacon_exp = false;
-  int noOfHikers;
+  int noOfHikers, _valInMinutes;
   List<dynamic> hikers = [];
   final Set<Marker> _markers = Set();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   Completer<GoogleMapController> _controller = Completer();
+
   CameraPosition _initialPos =
       CameraPosition(target: LatLng(19.07283, 72.88261), zoom: 12.0);
 
-  beaconExpire(BuildContext context) {
+  beaconExpire(BuildContext context) async {
+    Fluttertoast.showToast(
+        msg: "Beacon Expired , Exiting ",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.TOP);
     Firestore.instance.collection('hikes').document(widget.passkey).delete();
-    beacon_exp = true;
+    Navigator.popUntil(
+      context,
+      ModalRoute.withName(Navigator.defaultRouteName),
+    );
+    setState(() {
+      beacon_exp = true;
+    });
     print("Beacon expired");
   }
 
@@ -57,99 +72,223 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
                 topRight: Radius.circular(15.0))),
         context: context,
         builder: (context) {
-          if (hikeExists) {
+          if (hikeExists == true) {
             return Column(
               children: <Widget>[
                 Center(
                     child: Container(
                         margin: EdgeInsets.only(top: 10.0, bottom: 10.0),
-                        child: Text(
-                          'Your fellow hikers',
-                          style: TextStyle(fontSize: 25.0),
-                        ))),
-                Container(
-                  height: 200.0,
-                  child: StreamBuilder(
-                    stream: Firestore.instance
-                        .collection('hikes')
-                        .document(widget.passkey)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        hikers = snapshot.data['hikers'];
+                        child: Column(
+                          children: <Widget>[
+                            Text(
+                              'Your fellow hikers',
+                              style: TextStyle(fontSize: 25.0),
+                            ),
+                            Button(
+                              onTap: () {
+                                if (widget.isReferal == false) {
+                                  _hikerName = widget.hikeCreator;
+                                } else {
+                                  _hikerName = _hikerName;
+                                }
 
-                        if (hikers.length != 0) {
-                          return ListView.separated(
-                              separatorBuilder: (_, index) => Divider(
-                                    color: Colors.purple[900],
-                                  ),
-                              itemCount: hikers.length,
-                              itemBuilder: (context, index) {
-                                return ListTile(
-                                  title: Text(hikers[index]),
-                                  trailing: hikers[index] == beaconHolder
-                                      ? Icon(
-                                          Icons.adjust,
+                                print("Hikername " + _hikerName.toString());
+                                print("Holder " + beaconHolder.toString());
+                                if (_hikerName == beaconHolder) {
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) => Dialog(
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(20.0))),
+                                            child: Container(
+                                              height: 380,
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 32,
+                                                        vertical: 16),
+                                                child: Column(
+                                                  children: <Widget>[
+                                                    Text(
+                                                      'Update time duration',
+                                                      style: TextStyle(
+                                                          color: Colors
+                                                              .purple[900],
+                                                          fontSize: 20.0),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 25.0,
+                                                    ),
+                                                    Center(
+                                                      child: Container(
+                                                        height: 200.0,
+                                                        child: DurationPicker(
+                                                          onChange:
+                                                              (Duration value) {
+                                                            setState(() {
+                                                              _valInMinutes =
+                                                                  value
+                                                                      .inMinutes;
+                                                            });
+                                                          },
+                                                          snapToMins: 2.0,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      height: 30.0,
+                                                    ),
+                                                    Button(
+                                                      onTap: () async {
+                                                        if (_hikerName ==
+                                                            beaconHolder) {
+                                                          final String
+                                                              old_time =
+                                                              await _store
+                                                                  .getExpTime(widget
+                                                                      .passkey);
+                                                          final exp_time = DateTime
+                                                                  .parse(
+                                                                      old_time)
+                                                              .toLocal()
+                                                              .add(Duration(
+                                                                  minutes:
+                                                                      _valInMinutes));
+                                                          await _store
+                                                              .updateHikeDuration(
+                                                                  widget
+                                                                      .passkey,
+                                                                  beaconHolder,
+                                                                  exp_time
+                                                                      .toString())
+                                                              .then((res) {
+                                                            if (res == true) {
+                                                              Fluttertoast
+                                                                  .showToast(
+                                                                      msg:
+                                                                          "Updated");
+                                                            } else {
+                                                              Fluttertoast
+                                                                  .showToast(
+                                                                      msg:
+                                                                          "Only the beacon holder can update");
+                                                            }
+                                                            Navigator.pop(
+                                                                context);
+                                                          });
+                                                        } else {
+                                                          Fluttertoast.showToast(
+                                                              msg:
+                                                                  "Only the beacon holder can update");
+                                                        }
+                                                      },
+                                                      text: 'Update',
+                                                      borderColor: Colors.black,
+                                                      buttonHeight: 20.0,
+                                                      buttonColor:
+                                                          Colors.purple[900],
+                                                    )
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ));
+                                } else {
+                                  Fluttertoast.showToast(
+                                      msg: 'You aren\'t the beacon holder !');
+                                }
+                              },
+                              text: 'Change duration',
+                              borderColor: Colors.black,
+                              buttonColor: Colors.purple[900],
+                              buttonHeight: 10.0,
+                              buttonWidth: 5.0,
+                            )
+                          ],
+                        ))),
+                hikeExists == true
+                    ? Container(
+                        height: 200.0,
+                        child: StreamBuilder(
+                          stream: Firestore.instance
+                              .collection('hikes')
+                              .document(widget.passkey)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (snapshot.data != null) {
+                              if (snapshot.data['hikers'].length != 0) {
+                                hikers = snapshot.data['hikers'];
+                                return ListView.separated(
+                                    separatorBuilder: (_, index) => Divider(
                                           color: Colors.purple[900],
-                                        )
-                                      : Container(
-                                          width: 2.0,
-                                          height: 2.0,
                                         ),
-                                  onTap: () async {
-                                    print("Hiker name : " +
-                                        _hikerName.toString());
-                                    print("Beacon holder : " + beaconHolder);
-                                    if (widget.isReferal == false) {
-                                      _hikerName = widget.hikeCreator;
-                                    }
-                                    if (beaconHolder == _hikerName) {
-                                      print("zzzzzzzzHiker name : " +
-                                          _hikerName.toString());
-                                      print("zzzzzzzzzzzBeacon holder : " +
-                                          beaconHolder);
-                                      final new_head =
-                                          await _beaconRelayCallback(
-                                              hikers[index]);
-                                      setState(() {
-                                        beaconHolder = new_head;
-                                      });
-                                      Fluttertoast.showToast(msg: 'Updated');
-                                      // Navigator.pop(context);
-                                    } else {
-                                      Fluttertoast.showToast(
-                                          msg:
-                                              "First you should own the beacon");
-                                    }
-                                  },
-                                  onLongPress: () {
-                                    if (hikers[index] == widget.hikeCreator) {
-                                      Fluttertoast.showToast(
-                                          msg:
-                                              "That is you , the hike Creator");
-                                    }
-                                    if (hikers[index] == _hikerName) {
-                                      print("Yes youuuu");
-                                      Fluttertoast.showToast(
-                                          msg: "That is you");
-                                    }
-                                  },
+                                    itemCount: hikers.length,
+                                    itemBuilder: (context, index) {
+                                      return ListTile(
+                                        title: Text(hikers[index]),
+                                        trailing: hikers[index] == beaconHolder
+                                            ? Icon(
+                                                Icons.adjust,
+                                                color: Colors.purple[900],
+                                              )
+                                            : Container(
+                                                width: 2.0,
+                                                height: 2.0,
+                                              ),
+                                        onTap: () async {
+                                          print(
+                                              "Hikern" + _hikerName.toString());
+                                          print("Beacon h" + beaconHolder);
+                                          if (beaconHolder == hikers[index]) {
+                                            print("You already own the beaker");
+                                          } else {
+                                            if (beaconHolder == _hikerName) {
+                                              final new_head =
+                                                  await _beaconRelayCallback(
+                                                      hikers[index]);
+                                              setState(() {
+                                                beaconHolder = new_head;
+                                              });
+                                            } else {
+                                              Fluttertoast.showToast(
+                                                  msg:
+                                                      "First you should own the beacon");
+                                            }
+                                          }
+                                        },
+                                        onLongPress: () {
+                                          if (widget.isReferal == true) {
+                                            if (hikers[index] ==
+                                                widget.hikeCreator) {
+                                              Fluttertoast.showToast(
+                                                  msg: "That is you");
+                                            }
+                                          }
+                                          if (hikers[index] == _hikerName) {
+                                            print("Yes youuuu");
+                                            Fluttertoast.showToast(
+                                                msg: "That is you");
+                                          }
+                                        },
+                                      );
+                                    });
+                              } else {
+                                return Center(
+                                  child: Text('The hike has ended'),
                                 );
-                              });
-                        } else {
-                          return Center(
-                            child: Text('The hike has ended'),
-                          );
-                        }
-                        ;
-                      } else {
-                        return Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      }
-                    },
-                  ),
-                ),
+                              }
+                              ;
+                            } else {
+                              return Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                          },
+                        ))
+                    : Center(
+                        child: Text('Beacon expired'),
+                      ),
               ],
             );
           } else {
@@ -231,11 +370,35 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.isReferal == false) {
+      _hikerName = widget.hikeCreator;
+    }
     prepare();
   }
 
   @override
   Widget build(BuildContext context) {
+    pr = new ProgressDialog(context, type: ProgressDialogType.Normal);
+
+    pr.style(
+      message: 'Generating invite hike ...',
+      borderRadius: 10.0,
+      progressWidget: Container(
+          padding: EdgeInsets.all(8.0),
+          child: CircularProgressIndicator(
+            strokeWidth: 3.0,
+          )),
+      backgroundColor: Colors.white,
+      elevation: 90.0,
+      //insetAnimCurve: Curves.elasticInOut,
+      progress: 0.0,
+      maxProgress: 100.0,
+      progressTextStyle: TextStyle(
+          color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+      messageTextStyle: TextStyle(
+          color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
+    );
+
     return Scaffold(
       key: _scaffoldKey,
       body: Column(
@@ -263,16 +426,37 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
                               fontWeight: FontWeight.bold),
                         )),
                     Container(
-                      margin: EdgeInsets.only(left: 30.0, bottom: 10.0),
-                      child: GestureDetector(
-                        onTap: () {
-                          createUrl();
-                        },
-                        child: Icon(
-                          Icons.share,
-                          color: Colors.white,
-                          size: 35.0,
-                        ),
+                      margin: EdgeInsets.only(left: 100.0, bottom: 10.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: <Widget>[
+                          GestureDetector(
+                            onTap: () {
+                              pr.show();
+                              createUrl();
+                            },
+                            child: Icon(
+                              Icons.share,
+                              color: Colors.white,
+                              size: 28.0,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Clipboard.setData(
+                                  ClipboardData(text: widget.passkey));
+                              Fluttertoast.showToast(msg: 'share passkey now ');
+                            },
+                            child: Container(
+                              margin: EdgeInsets.only(left: 15.0),
+                              child: Icon(
+                                Icons.vpn_key,
+                                color: Colors.white,
+                                size: 30.0,
+                              ),
+                            ),
+                          )
+                        ],
                       ),
                     )
                   ],
@@ -280,121 +464,105 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
           ),
           Stack(
             children: <Widget>[
-              Container(
-                height: MediaQuery.of(context).size.height - 150,
-                child: GoogleMap(
-                  mapType: MapType.normal,
-                  initialCameraPosition: _initialPos,
-                  onMapCreated: (GoogleMapController controller) {
-                    _controller.complete(controller);
-                  },
-                  myLocationEnabled: true,
-                  myLocationButtonEnabled: true,
-                  markers: _markers,
-                ),
-              ),
-              widget.isReferal == true
+              widget.isReferal == false
                   ? Container(
+                      height: MediaQuery.of(context).size.height - 150,
+                      child: GoogleMap(
+                        mapType: MapType.normal,
+                        initialCameraPosition: _initialPos,
+                        onMapCreated: (GoogleMapController controller) {
+                          _controller.complete(controller);
+                        },
+                        myLocationEnabled: true,
+                        myLocationButtonEnabled: true,
+                        markers: _markers,
+                      ),
+                    )
+                  : Container(
                       child: Align(
-                        alignment: Alignment.center,
+                        alignment: Alignment.bottomCenter,
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Button(
-                            buttonHeight: 25,
-                            buttonColor: Colors.purple[900],
-                            buttonWidth: 64,
-                            text: 'Add Me',
-                            onTap: () {
-                              showDialog(
-                                  context: (context),
-                                  builder: (context) => Dialog(
-                                        child: Container(
-                                          height: 200,
-                                          child: Scaffold(
-                                            body: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: Column(
-                                                children: <Widget>[
-                                                  Flexible(
-                                                    child: TextFormField(
-                                                      onChanged: (key) {
-                                                        setState(() {
-                                                          _hikerName = key;
-                                                        });
-                                                      },
-                                                      decoration:
-                                                          InputDecoration(
-                                                        hintText:
-                                                            'Username Here',
-                                                        hintStyle: TextStyle(
-                                                            fontSize: 20,
-                                                            color:
-                                                                Colors.black),
-                                                        labelText: 'Username',
-                                                        labelStyle: TextStyle(
-                                                            fontSize: 14,
-                                                            color: Colors
-                                                                .purple[900]),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(
-                                                    height: 10,
-                                                  ),
-                                                  Button(
-                                                    text: 'Done',
-                                                    buttonWidth: 40,
-                                                    onTap: () async {
-                                                      final _store = Provider
-                                                          .of<FirestoreService>(
-                                                              context,
-                                                              listen: false);
-                                                      bool res = await _store
-                                                          .addUserToHike(
-                                                              _hikerName,
-                                                              widget.passkey);
-
-                                                      Navigator.pop(context);
-
-                                                      if (res == true) {
-                                                        print("User added");
-                                                        Fluttertoast.showToast(
-                                                            msg:
-                                                                "Added you to the nike");
-                                                      } else {
-                                                        Fluttertoast.showToast(
-                                                            msg:
-                                                                "Already a user exists with that name");
-                                                      }
-
-                                                      setState(() {
-                                                        widget.isReferal =
-                                                            false;
-                                                      });
-                                                    },
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
+                          child: Container(
+                            height: 175.0,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: <Widget>[
+                                Container(
+                                  padding: EdgeInsets.all(15.0),
+                                  child: TextFormField(
+                                    style: TextStyle(fontSize: 20.0),
+                                    onChanged: (val) {
+                                      _hikerName = val;
+                                    },
+                                    decoration: InputDecoration(
+                                        enabledBorder: UnderlineInputBorder(
+                                          borderSide: BorderSide(
+                                              color: Colors.purple[900]),
                                         ),
-                                      ));
-                            },
+                                        focusedBorder: UnderlineInputBorder(
+                                          borderSide: BorderSide(
+                                              color: Colors.purple[900]),
+                                        ),
+                                        hintText: 'Name',
+                                        hintStyle: TextStyle(
+                                            fontSize: 20.0,
+                                            color: Colors.black)),
+                                  ),
+                                  decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(30.0))),
+                                ),
+                                Button(
+                                  text: 'Join hike',
+                                  buttonHeight: 25,
+                                  buttonWidth: 25,
+                                  borderColor: Colors.black,
+                                  buttonColor: Colors.purple[900],
+                                  onTap: () async {
+                                    final _store =
+                                        Provider.of<FirestoreService>(context,
+                                            listen: false);
+                                    await _store
+                                        .addUserToHike(
+                                            _hikerName, widget.passkey)
+                                        .then((res) {
+                                      if (res == true) {
+                                        Fluttertoast.showToast(
+                                            msg:
+                                                "Already a user exists with that name");
+
+                                        Navigator.pop(context);
+                                      } else {
+                                        Fluttertoast.showToast(
+                                            msg: "Added you to hike ");
+                                        setState(() {
+                                          widget.isReferal = false;
+                                        });
+                                      }
+                                    });
+                                  },
+                                )
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     )
-                  : Container()
             ],
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        label: Text('Others'),
-        icon: Icon(Icons.people_outline),
-        onPressed: _showBottomSheetCallback,
-      ),
+      floatingActionButton: widget.isReferal == false
+          ? FloatingActionButton.extended(
+              label:
+                  beacon_exp == true ? Text(' Beacon Expired') : Text('Hikers'),
+              icon: beacon_exp == true
+                  ? Icon(Icons.remove)
+                  : Icon(Icons.people_outline),
+              onPressed: beacon_exp == false ? _showBottomSheetCallback : null)
+          : null,
     );
   }
 
@@ -477,9 +645,11 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
 
   void createUrl() async {
     if (!isGenLink) {
-      await _generateDynamicLink(true);
+      await _generateDynamicLink(true).whenComplete(() {
+        pr.dismiss();
+      });
       Clipboard.setData(ClipboardData(text: _linkMsg));
-      Fluttertoast.showToast(msg: 'Url is copied');
+      Fluttertoast.showToast(msg: 'You can share the link now !');
     }
   }
 
@@ -519,3 +689,63 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
     });
   }
 }
+
+// showDialog(
+//                           context: context,
+//                           builder: (context) => Dialog(
+//                                 shape: RoundedRectangleBorder(
+//                                     borderRadius: BorderRadius.all(
+//                                         Radius.circular(20.0))),
+//                                 child: Container(
+//                                   height: 250,
+//                                   child: Padding(
+//                                     padding: const EdgeInsets.symmetric(
+//                                         horizontal: 32, vertical: 16),
+//                                     child: Column(
+//                                       children: <Widget>[
+//                                         Container(
+//                                           child: Padding(
+//                                             padding: const EdgeInsets.all(4.0),
+//                                             child: TextFormField(
+//                                               cursorColor: Colors.purple[900],
+//                                               onChanged: (key) {
+//                                                 _enteredPassKey = key;
+//                                               },
+//                                               decoration: InputDecoration(
+//                                                 enabledBorder:
+//                                                     UnderlineInputBorder(
+//                                                   borderSide: BorderSide(
+//                                                       color: Colors.black),
+//                                                 ),
+//                                                 focusedBorder:
+//                                                     UnderlineInputBorder(
+//                                                   borderSide: BorderSide(
+//                                                       color: Colors.deepPurple),
+//                                                 ),
+//                                                 labelText: 'Passkey',
+//                                                 labelStyle: TextStyle(
+//                                                     color: Colors.purple[900]),
+//                                               ),
+//                                             ),
+//                                           ),
+//                                         ),
+//                                         SizedBox(
+//                                           height: 30,
+//                                         ),
+//                                         Flexible(
+//                                           child: Button(
+//                                               buttonWidth: 48,
+//                                               buttonHeight: 30,
+//                                               text: 'Validate',
+//                                               textColor: Colors.white,
+//                                               buttonColor: Colors.purple[900],
+//                                               onTap: () {
+//                                                 Navigator.pop(context);
+//                                                 checkPasskey(_enteredPassKey);
+//                                               }),
+//                                         ),
+//                                       ],
+//                                     ),
+//                                   ),
+//                                 ),
+//                               ));

@@ -72,9 +72,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   checkPasskey(String enteredPasskey) async {
-    setState(() {
-      // isCreatingHikeRoom=true;
-    });
     try {
       final _store = Provider.of<FirestoreService>(context, listen: false);
       bool hikeExist = await _store.checkIfHikeExists(enteredPasskey);

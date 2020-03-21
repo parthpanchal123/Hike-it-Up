@@ -82,6 +82,18 @@ class FirestoreService {
     });
   }
 
+  Future<bool> updateHikeDuration(
+      String passkey, String head, String exp_time) async {
+    DocumentReference ref = _store.collection('hikes').document(passkey);
+    final hike_data = await ref.get();
+    if (hike_data.data['beaconWith'] == head) {
+      ref.updateData({'expiryAt': exp_time});
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   Future<bool> checkIfHikeExists(String passkey) async {
     final snapShot = await _store.collection('hikes').document(passkey).get();
     if (snapShot == null || !snapShot.exists) {
