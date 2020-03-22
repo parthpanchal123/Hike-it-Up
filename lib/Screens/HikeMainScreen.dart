@@ -44,10 +44,14 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
         toastLength: Toast.LENGTH_LONG,
         gravity: ToastGravity.TOP);
     Firestore.instance.collection('hikes').document(widget.passkey).delete();
-    Navigator.popUntil(
-      context,
-      ModalRoute.withName(Navigator.defaultRouteName),
-    );
+    Fluttertoast.showToast(msg: 'Beacon expired ... Exiting',toastLength: Toast.LENGTH_LONG,gravity: ToastGravity.TOP);
+    Navigator.of(context).pushNamedAndRemoveUntil('/main', (Route<dynamic> route) => false );
+//    Navigator.popUntil(
+//      context,
+//      ModalRoute.withName(Navigator.defaultRouteName),
+//    );
+
+
     setState(() {
       beacon_exp = true;
     });
@@ -303,7 +307,7 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
 
     final minutes =
         DateTime.parse(final_exp).difference(DateTime.now()).inMinutes;
-    print(minutes);
+    print("The minutes to expire at " + minutes.toString());
     Future.delayed(Duration(minutes: minutes), () {
       beaconExpire(context);
       print("Done with shit");
@@ -370,6 +374,7 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
   @override
   void initState() {
     super.initState();
+    print(Navigator.defaultRouteName);
     if (widget.isReferal == false) {
       _hikerName = widget.hikeCreator;
     }

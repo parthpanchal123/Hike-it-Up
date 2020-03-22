@@ -15,6 +15,13 @@ void main() => runApp(MultiProvider(
         )
       ],
       child: MaterialApp(
+
+        routes: {
+          // When navigating to the "/" route, build the FirstScreen widget.
+
+          // When navigating to the "/second" route, build the SecondScreen widget.
+          '/main': (context) => HomeScreen(),
+        },
         theme: ThemeData(accentColor: Colors.purple[900]),
         debugShowCheckedModeBanner: false,
         title: 'Lets Beacon',
