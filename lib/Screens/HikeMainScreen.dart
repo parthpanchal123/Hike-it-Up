@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-
 import 'package:beaconapp/Services/FirestoreService.dart';
 import 'package:beaconapp/Services/LocationService.dart';
 import 'package:beaconapp/common_widgets/Button.dart';
@@ -338,8 +337,7 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
             markerId: MarkerId('Hikes Location'),
             position: LatLng(lat, long),
             infoWindow: InfoWindow(
-                title: 'Yo Hikers',
-                snippet: 'This is our hike location . Tap to copy'),
+                title: 'Yo Hikers', snippet: 'This is our hike location'),
             onTap: () {}),
       );
     });
@@ -479,6 +477,7 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
                     ? Container(
                         height: MediaQuery.of(context).size.height - 150,
                         child: GoogleMap(
+                          buildingsEnabled: true,
                           mapType: MapType.normal,
                           initialCameraPosition: _initialPos,
                           onMapCreated: (GoogleMapController controller) {

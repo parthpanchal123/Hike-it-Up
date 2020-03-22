@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:beaconapp/Screens/HikeMainScreen.dart';
 import 'package:beaconapp/Services/FirestoreService.dart';
 import 'package:beaconapp/common_widgets/Button.dart';
@@ -68,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    _checkNetConnecton();
     setUpLinks();
   }
 
@@ -369,5 +372,48 @@ class _HomeScreenState extends State<HomeScreen> {
         )
       ],
     ));
+  }
+
+  void _checkNetConnecton() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        print('connected');
+      }
+    } on SocketException catch (_) {
+      print("ayayayay");
+      showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (context) => Dialog(
+                elevation: 2.0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0)),
+                child: Container(
+                  decoration: BoxDecoration(),
+                  width: 500.0,
+                  height: 200.0,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: <Widget>[
+                      Text(
+                        'You need an active internet connection !',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20.0,
+                        ),
+                      ),
+                      Button(
+                        text: 'Done',
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        buttonHeight: 20.0,
+                      ),
+                    ],
+                  ),
+                ),
+              ));
+    }
   }
 }
