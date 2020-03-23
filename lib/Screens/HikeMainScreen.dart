@@ -39,7 +39,7 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
 
   beaconExpire(BuildContext context) async {
     Fluttertoast.showToast(
-        msg: "Beacon Expired , Exiting ",
+        msg: "Hike duration expired , Exiting ",
         toastLength: Toast.LENGTH_LONG,
         gravity: ToastGravity.TOP);
     Firestore.instance.collection('hikes').document(widget.passkey).delete();
@@ -427,7 +427,7 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
                       Container(
                           margin: EdgeInsets.only(bottom: 10.0),
                           child: Text(
-                            "Your Hike",
+                            "Hike-it Up",
                             style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 30.0,
