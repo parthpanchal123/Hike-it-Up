@@ -425,11 +425,12 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: <Widget>[
                       Container(
-                          margin: EdgeInsets.only(bottom: 10.0),
+                          margin: EdgeInsets.only(bottom: 10.0, left: 10.0),
                           child: Text(
                             "Hike-it Up",
                             style: TextStyle(
                                 color: Colors.white,
+                                fontFamily: 'ProductSans',
                                 fontSize: 30.0,
                                 fontWeight: FontWeight.bold),
                           )),
@@ -454,7 +455,7 @@ class _HikeMainScreenState extends State<HikeMainScreen> {
                                 Clipboard.setData(
                                     ClipboardData(text: widget.passkey));
                                 Fluttertoast.showToast(
-                                    msg: 'share passkey now ');
+                                    msg: 'Share passkey now to your friends ');
                               },
                               child: Container(
                                 margin: EdgeInsets.only(left: 15.0),
