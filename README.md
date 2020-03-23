@@ -2,7 +2,7 @@
 
 Hike-it Up is a simple application that allows you to share your location with your friends or family for a particular duration of time. 
 
-# How it works ?
+## How it works ?
 1) You create a new hike if you need to share your location. You add your name and the hike-duration , that is for how long you need to share your location. You can even increase the location afterwards.
 
 2) Once a new hike is created, now you can share the link of the hike to single or multiple friends, and they now will have access to your location. You can even generate a passkey for the hike, instead of the link and that too works.
